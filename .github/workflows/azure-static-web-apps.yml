@@ -13,14 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build And Deploy
+      - name: Build and Deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-      
-          # ⭐ 關鍵三行
-          app_location: "/"
-          output_location: "dist"
 
+          app_location: "/"
+          api_location: ""
+          output_location: "dist"
