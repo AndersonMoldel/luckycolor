@@ -9,17 +9,23 @@ on:
 jobs:
   build_and_deploy_job:
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and Deploy
+      # ⭐ 手動跑 build（關鍵）
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      # ⭐ 明確告訴 SWA：直接上傳 dist
+      - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: "upload"
-
-          app_location: "/"
-          api_location: ""
-          output_location: "dist"
+          action: upload
+          app_location: "dist"
+          skip_app_build: true
