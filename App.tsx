@@ -1,27 +1,52 @@
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { calculateBazi } from './services/baziService';
 import { lookupUsefulGods, dedupeElements } from './services/luckyColorService';
-import { BaziResult, ElementType } from './types';
+import { ElementType } from './types';
 import LuckyColorCard from './components/LuckyColorCard';
-import { Sparkles, Download, Search, Info, User, Calendar } from 'lucide-react';
+import { Sparkles, Download, Search, Info, User, Calendar, ChevronDown } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
 const App: React.FC = () => {
   const [name, setName] = useState('陳小明');
   const [gender, setGender] = useState('男');
-  const [birthDate, setBirthDate] = useState('1990-01-01');
+  
+  // 將日期狀態拆分為年、月、日
+  const [birthYear, setBirthYear] = useState('1990');
+  const [birthMonth, setBirthMonth] = useState('01');
+  const [birthDay, setBirthDay] = useState('01');
+  
   const [results, setResults] = useState<{
     usefulElements: ElementType[];
   } | null>(null);
 
   const reportRef = useRef<HTMLDivElement>(null);
 
+  // 生成選項資料
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: currentYear - 1900 + 1 }, (_, i) => (1900 + i).toString()).reverse();
+  }, []);
+
+  const monthOptions = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+  }, []);
+
+  const dayOptions = useMemo(() => {
+    return Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'));
+  }, []);
+
   const handleAnalyze = useCallback(() => {
     try {
-      // Use a default time (12:00) since time input is removed
-      const fullDate = new Date(`${birthDate}T12:00:00`);
+      // 組合日期字串進行分析 (YYYY-MM-DD)
+      const dateString = `${birthYear}-${birthMonth}-${birthDay}`;
+      const fullDate = new Date(`${dateString}T12:00:00`);
+      
+      if (isNaN(fullDate.getTime())) {
+        throw new Error("請確認輸入的日期是否有效");
+      }
+
       const bazi = calculateBazi(fullDate);
       const { usefulElements } = lookupUsefulGods(bazi.day.gan, bazi.month.zhi);
       
@@ -31,7 +56,7 @@ const App: React.FC = () => {
     } catch (error) {
       alert(error instanceof Error ? error.message : "分析發生錯誤");
     }
-  }, [birthDate]);
+  }, [birthYear, birthMonth, birthDay]);
 
   const exportAsImage = async () => {
     if (!reportRef.current) return;
@@ -87,11 +112,10 @@ const App: React.FC = () => {
           <Sparkles className="text-amber-500" size={32} />
           <h1 className="text-3xl md:text-4xl font-black text-slate-800">專屬本命幸運色</h1>
         </div>
-        <p className="text-slate-500">尋找您的本命色彩能量 · 穿搭與生活開運指南</p>
+        <p className="text-slate-500 font-medium">尋找您的本命色彩能量 · 穿搭與生活開運指南</p>
       </header>
 
       <main className="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left: Input Form */}
         <section className="lg:col-span-5 flex flex-col gap-6">
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -127,15 +151,52 @@ const App: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">出生日期</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-2.5 text-slate-400" size={18} />
-                  <input 
-                    type="date" 
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-300 bg-white text-black focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  />
+                <label className="flex items-center gap-1 text-sm font-medium text-slate-700 mb-1">
+                  <Calendar size={14} className="text-slate-400" />
+                  出生日期
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {/* 年份選擇 */}
+                  <div className="relative">
+                    <select 
+                      value={birthYear}
+                      onChange={(e) => setBirthYear(e.target.value)}
+                      className="w-full pl-3 pr-8 py-2 rounded-xl border border-slate-300 bg-white text-black focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer appearance-none text-sm"
+                    >
+                      {yearOptions.map(year => (
+                        <option key={year} value={year}>{year} 年</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                  
+                  {/* 月份選擇 */}
+                  <div className="relative">
+                    <select 
+                      value={birthMonth}
+                      onChange={(e) => setBirthMonth(e.target.value)}
+                      className="w-full pl-3 pr-8 py-2 rounded-xl border border-slate-300 bg-white text-black focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer appearance-none text-sm"
+                    >
+                      {monthOptions.map(month => (
+                        <option key={month} value={month}>{month} 月</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+
+                  {/* 日期選擇 */}
+                  <div className="relative">
+                    <select 
+                      value={birthDay}
+                      onChange={(e) => setBirthDay(e.target.value)}
+                      className="w-full pl-3 pr-8 py-2 rounded-xl border border-slate-300 bg-white text-black focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer appearance-none text-sm"
+                    >
+                      {dayOptions.map(day => (
+                        <option key={day} value={day}>{day} 日</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
@@ -151,13 +212,12 @@ const App: React.FC = () => {
 
           <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex gap-3">
             <Info className="text-indigo-400 shrink-0" size={20} />
-            <p className="text-xs text-indigo-700 leading-relaxed">
+            <p className="text-xs text-indigo-700 leading-relaxed font-medium">
               系統將根據您的出生日期，精確比對您的本命五行屬性，並計算出能增強您運勢與心理能量的幸運色系。
             </p>
           </div>
         </section>
 
-        {/* Right: Results Display */}
         <section className="lg:col-span-7 space-y-6">
           {!results ? (
             <div className="bg-white rounded-3xl p-12 flex flex-col items-center justify-center text-center border border-dashed border-slate-300 h-full min-h-[400px]">
@@ -170,22 +230,20 @@ const App: React.FC = () => {
           ) : (
             <div className="space-y-6">
               <div ref={reportRef} className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 space-y-8">
-                {/* Header Info */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-100 pb-6">
                   <div>
                     <h2 className="text-2xl font-black mb-1 text-slate-900">{name} 的專屬本命幸運色</h2>
-                    <p className="text-sm text-slate-500 font-medium">{birthDate} · {gender}性</p>
+                    <p className="text-sm text-slate-500 font-medium">{birthYear}年{birthMonth}月{birthDay}日 · {gender}性</p>
                   </div>
                   <div className="bg-slate-100 px-3 py-1 rounded-lg text-xs font-mono text-slate-500 uppercase">
-                    Personalized Energy Report
+                    
                   </div>
                 </div>
 
-                {/* Lucky Colors Only */}
                 <div>
                   <div className="mb-6">
                     <h3 className="text-lg font-bold text-slate-800 mb-2">您的開運色彩建議</h3>
-                    <p className="text-sm text-slate-500">以下色系能為您帶來平衡與自信，建議應用於服飾、飾品或居家環境中。</p>
+                    <p className="text-sm text-slate-500 font-medium">以下色系能為您帶來平衡與自信，建議應用於服飾、飾品或居家環境中。</p>
                   </div>
                   
                   <div className="grid grid-cols-1 gap-4">
@@ -195,15 +253,13 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Footer Note */}
                 <div className="pt-6 border-t border-slate-100">
-                  <p className="text-[10px] text-slate-400 italic">
-                    註：本色彩報告基於您的生辰五行互補原理產生，僅供個人風格與生活開運參考。
+                  <p className="text-[10px] text-slate-400 italic font-medium">
+                    註：本色彩報告基於您的本命五行產生，僅供個人風格與生活開運參考。
                   </p>
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-4">
                 <button 
                   onClick={exportAsImage}
@@ -225,8 +281,8 @@ const App: React.FC = () => {
         </section>
       </main>
 
-      <footer className="mt-16 mb-8 text-slate-400 text-xs text-center">
-        © 2024 Lucky Color Analyst · 專業色彩能量顧問
+      <footer className="mt-16 mb-8 text-slate-400 text-xs text-center font-medium">
+        © 2026 Lucky Color Analyst · 專業色彩能量顧問
       </footer>
     </div>
   );
