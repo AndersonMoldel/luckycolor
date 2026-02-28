@@ -4,7 +4,7 @@ import { ElementType, ElementInfo } from './types';
 export const ELEMENT_CONFIG: Record<ElementType, ElementInfo> = {
   "木": { color: "#2E7D32", palette: "綠色系、青色系", description: "象徵生命力與成長" },
   "火": { color: "#C62828", palette: "紅系、橙色系、粉紅色系、紫色系", description: "象徵熱情與活力" },
-  "土": { color: "#8D6E63", palette: "黃色系、卡其色系、大地色系", description: "象徵穩定與包容" },
+  "土": { color: "#FBC02D", palette: "黃色系、卡其色系、大地色系", description: "象徵穩定與包容" },
   "金": { color: "#607D8B", palette: "白色系、銀灰色系、鉑金色系", description: "象徵堅毅與純淨" },
   "水": { color: "#1565C0", palette: "黑色系、藍色系", description: "象徵智慧與流動" },
 };
